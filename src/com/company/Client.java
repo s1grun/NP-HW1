@@ -9,6 +9,7 @@ import com.company.common.Message;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -19,16 +20,16 @@ public class Client {
                   Socket clientSocket =new Socket ("127.0.0.1",3000);
                   System.out.println("connect to 3000");
 
-                  PrintStream output =new PrintStream(new BufferedOutputStream(clientSocket.getOutputStream()));
+                  PrintWriter output =new PrintWriter(clientSocket.getOutputStream());
                   DataInputStream input=new DataInputStream(clientSocket.getInputStream());
 
                   String response;
                   while (( response= input.readLine())!=null){
-                      response=input.readLine();
+//                      response=input.readLine();
                       System.out.println("server: "+" "+response);
                   }
 
-
+                  System.out.println("guess:");
                   Scanner scan = new Scanner(System.in);
                   String ch = scan.nextLine();
 
@@ -63,6 +64,11 @@ public class Client {
               } catch (Exception e){
                 System.err.println("Exception :"+e);
               }
+        }
+
+
+        private static void handler(PrintWriter out, DataInputStream in){
+
         }
 
 

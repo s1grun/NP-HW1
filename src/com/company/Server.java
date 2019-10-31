@@ -77,7 +77,7 @@ public class Server {
         }
 
         DataInputStream input=new DataInputStream(new BufferedInputStream(client.getInputStream()));
-        PrintStream output=new PrintStream(new BufferedOutputStream(client.getOutputStream()));
+        PrintWriter output=new PrintWriter(client.getOutputStream());
 
         output.println(new Message("word", underline).toString());
         output.flush();
