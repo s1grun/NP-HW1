@@ -27,6 +27,6 @@ public class Message {
     public static Message toMessage(String str){
         String[] strArr = str.split(",");
 //        System.out.println(strArr[0].substring(6));
-        return new Message(strArr[0].substring(5),strArr[1].substring(6));
+        return new Message(strArr[0].substring(6),strArr[1].substring(6,strArr[1].length()-1));
     }
 }

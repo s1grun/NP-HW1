@@ -6,36 +6,53 @@ package com.company;
 
 import com.company.common.Message;
 
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
           public static void main(String[] args)
           {
-              try{
-                  Socket clientSocket =new Socket ("127.0.0.1",3000);
+              try(Socket clientSocket =new Socket("127.0.0.1",3000)){
+
                   System.out.println("connect to 3000");
 
                   PrintWriter output =new PrintWriter(clientSocket.getOutputStream());
-                  DataInputStream input=new DataInputStream(clientSocket.getInputStream());
+                  BufferedReader input = new BufferedReader(
+                          new InputStreamReader(clientSocket.getInputStream()));
 
                   String response;
                   while (( response= input.readLine())!=null){
 //                      response=input.readLine();
-                      System.out.println("server: "+" "+response);
+                      Message resp = Message.toMessage(response);
+                      String type = resp.getType();
+                      String body = resp.getBody();
+
+                      System.out.println(type);
+                      if (type.equals("content")){
+                          System.out.println("server: "+" "+response);
+                          System.out.println("guess:");
+                          Scanner scan = new Scanner(System.in);
+                          String ch = scan.nextLine();
+                          if(ch.length()==0 || ch.equals("")){
+                              ch = scan.nextLine();
+                          }else{
+                              output.println(new Message("try", ch.toLowerCase()).toString());
+                              output.flush();
+                          }
+
+                      }else {
+                          System.out.println("server: "+" "+body);
+                      }
+
                   }
 
-                  System.out.println("guess:");
-                  Scanner scan = new Scanner(System.in);
-                  String ch = scan.nextLine();
 
-                  output.println(new Message("try", ch).toString());
-                  response=input.readLine();
-                  System.out.println("server: "+" "+response);
+
+
+
+//                  response=input.readLine();
+//                  System.out.println("server: "+" "+response);
 //                  for(int i=2;i<=num/2;i++){
 //                      output.println(i);
 //                      output.flush();
