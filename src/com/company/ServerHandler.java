@@ -1,13 +1,11 @@
 package com.company;
 
 import com.company.common.Message;
+import com.company.common.Serialize;
 import com.company.common.Words;
 
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -41,6 +39,8 @@ public class ServerHandler implements Runnable{
             playGame();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
     }
@@ -65,7 +65,7 @@ public class ServerHandler implements Runnable{
         return w;
     }
 
-    private void startNewGame() throws IOException {
+    private void startNewGame() throws IOException, InterruptedException {
         this.word = generateWord();
 
         this.underline = "";
@@ -77,9 +77,15 @@ public class ServerHandler implements Runnable{
     }
 
 
-    private void playGame() throws IOException {
-        DataInputStream input=new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
-        PrintWriter output=new PrintWriter(clientSocket.getOutputStream());
+    private void playGame() throws IOException, InterruptedException {
+        DataInputStream input= null;
+        try {
+            input = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//        PrintWriter output=new PrintWriter(clientSocket.getOutputStream());
+        DataOutputStream output=new DataOutputStream(clientSocket.getOutputStream());
 
         String inputLine;
         int counter = word.length();
@@ -91,16 +97,23 @@ public class ServerHandler implements Runnable{
         printToClient(output, underline, counter, score);
 
 
-        while (( inputLine= input.readLine())!=null){
-            Message resp = Message.toMessage(inputLine);
-            String type = resp.getType();
-            String body = resp.getBody();
+        while (true){
+            int datalen = input.readInt();
+            System.out.println(datalen);
+            byte[] data = new byte[datalen];
+            input.readFully(data);
+            Message msg =(Message) Serialize.toObject(data);
+
+
+            String type = msg.getType();
+            String body = msg.getBody();
 
 //            System.out.println(type);
             System.out.println(body);
             switch(type) {
                 case "try":
                     // code block
+//                    Thread.currentThread().sleep(10000);
                     if(counter>=1){
 
 //                        System.out.println("word0:"+word);
@@ -111,10 +124,7 @@ public class ServerHandler implements Runnable{
                             word = w_u.get(0);
                             if (underline.indexOf("_")<0){
                                 score++;
-                                String w = new Message("finish", "score: "+Integer.toString(score)+" new game!").toString();
-                                output.println(w);
-                                output.flush();
-                                startNewGame();
+                                finishOneGame(output, score);
                                 break;
                             }else {
 //                                break;
@@ -128,16 +138,21 @@ public class ServerHandler implements Runnable{
                     if(counter==0 && underline.indexOf("_")>=0){
 
                         score--;
-                        String w = new Message("finish", "score: "+Integer.toString(score)+" new game!").toString();
-                        output.println(w);
-                        output.flush();
-                        startNewGame();
+//                        String w = new Message("finish", "score: "+Integer.toString(score)+" new game!").toString();
+//                        Serialize serialized = new Serialize(w);
+//                        output.write(serialized.getLength());
+//                        output.println(w);
+//                        output.flush();
+                        finishOneGame(output, score);
+
                         break;
                     }
                     printToClient(output, underline, counter, score);
                     break;
 
-
+                case "disconnect":
+                    close(input, output);
+                    break;
             }
 
 
@@ -146,15 +161,35 @@ public class ServerHandler implements Runnable{
 
     }
 
-    public static void printToClient(PrintWriter output,String underline, int counter, int score){
+    public static void printToClient(DataOutputStream output,String underline, int counter, int score) throws IOException {
 //        output.println();
-        String str = "word: "+underline+", attempts_left: "+Integer.toString(counter)+", score: "+Integer.toString(score);
-        String w = new Message("content", str).toString();
-//        String l = new Message("attempts_left", ).toString();
-//        String s = new Message("score", ).toString();
-        System.out.println(w);
-        output.println(w);
-        output.flush();
+        String str = underline+","+Integer.toString(counter)+","+Integer.toString(score);
+        Message w = new Message("update", str);
+        Message.sendMsg(output,w);
+//        Serialize serialized = new Serialize(w);
+//        output.writeInt(serialized.getLength());
+//
+////        String l = new Message("attempts_left", ).toString();
+////        String s = new Message("score", ).toString();
+////        System.out.println(Integer.toBinaryString(serialized.getLength()));
+//
+//        output.write(serialized.getOut());
+////        System.out.println(serialized.getOutString());
+//        System.out.println(w);
+//        output.flush();
+    }
+
+
+    public void finishOneGame(DataOutputStream output, int score) throws IOException, InterruptedException {
+        Message w = new Message("finish", Integer.toString(score));
+//        Serialize serialized = new Serialize(w);
+////        output.print(serialized.getLength());
+////        output.println(w);
+//        output.writeInt(serialized.getLength());
+//        output.write(serialized.getOut());
+//        output.flush();
+        Message.sendMsg(output,w);
+        startNewGame();
     }
 
 
@@ -182,6 +217,16 @@ public class ServerHandler implements Runnable{
         res.add(word);
         res.add(underline);
         return res;
+
+    }
+
+    public void close(DataInputStream input, DataOutputStream output) throws IOException {
+        input.close();
+        output.close();
+        System.out.println(Thread.currentThread()+" client quit");
+        clientSocket.close();
+        Thread.currentThread().stop();
+
 
     }
 

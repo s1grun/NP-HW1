@@ -1,9 +1,14 @@
 package com.company.common;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.net.Socket;
+
 /**
  * Created by weng on 2019/10/30.
  */
-public class Message {
+public class Message implements Serializable {
     private String type;
     private String body;
     public Message(String type, String body){
@@ -21,12 +26,22 @@ public class Message {
     }
 
     public String toString(){
-        return "{type:"+ type+", body:"+body+"}";
+        return "{type:"+ type+",body:"+body+"}";
     }
 
     public static Message toMessage(String str){
-        String[] strArr = str.split(",");
+        String[] strArr = str.split(",body:");
 //        System.out.println(strArr[0].substring(6));
-        return new Message(strArr[0].substring(6),strArr[1].substring(6,strArr[1].length()-1));
+        return new Message(strArr[0].substring(6),strArr[1].substring(0,strArr[1].length()-1));
+    }
+
+
+
+    public static void sendMsg(DataOutputStream output, Message msg) throws IOException {
+
+        Serialize serialized = new Serialize(msg);
+        output.writeInt(serialized.getLength());
+        output.write(serialized.getOut());
+        output.flush();
     }
 }

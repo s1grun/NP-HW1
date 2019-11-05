@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import com.company.common.Serialize;
 
 
 import com.company.common.*;
@@ -12,6 +13,7 @@ import com.company.common.*;
 public class Server {
     public static void main(String[] args){
         try{
+
 
             Server s = new Server();
             s.server();
@@ -68,6 +70,7 @@ public class Server {
             Socket clientSocket = serverSocket.accept();
             System.out.println("client join:"+ clientSocket);
 //            clientSocket.setSoLinger(true, LINGER_TIME);
+
 
 
 
