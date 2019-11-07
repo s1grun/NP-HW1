@@ -4,7 +4,7 @@ import java.io.*;
 
 
 /**
- * Created by weng on 2019/11/4.
+ * The Serialize class handles the logic of taking a Message(object) and convert it to a byte array.
  */
 public class Serialize {
 
@@ -21,6 +21,11 @@ public class Serialize {
 
     private int length;
 
+    /**
+     * Here we convert the message to a byte array and get the length of the array
+     * @param msg
+     * @throws IOException
+     */
     public Serialize(Message msg) throws IOException {
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream() ;
         this.objectOutputStream = new ObjectOutputStream(byteOutputStream) ;
@@ -54,6 +59,11 @@ public class Serialize {
 //
 //    }
 
+    /**
+     * Here we convert the byte array into an object so it is readable
+     * @param bytes
+     * @return
+     */
     public static Object toObject (byte[] bytes) {
         Object obj = null;
         try {

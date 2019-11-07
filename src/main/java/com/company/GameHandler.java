@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * Created by weng on 2019/11/5.
+ * The GameHandler class handles the logic of the hangman game
  */
 public class GameHandler {
 
@@ -25,7 +25,7 @@ public class GameHandler {
 
     public GameHandler(int score){
         this.score = score;
-        this.word = "coop";
+        this.word = generateWord();
 
         this.underline = "";
         for (char c : word.toCharArray()){
@@ -60,10 +60,17 @@ public class GameHandler {
         return score;
     }
 
+
+    /**
+     * The guess function handles the logic of guessing the characters for the word
+     */
     public Message guess(String str) throws IOException, InterruptedException {
         if(counter>=1){
 
-
+            /**
+             * If the counter(the counter equals how many characters a word has) is not zero,
+             * then the user can continue guessing
+             */
             if (word.indexOf(str)>=0){
                 ArrayList<String> w_u = replaceChar(word,str,underline);
                 underline = w_u.get(1);
@@ -80,6 +87,9 @@ public class GameHandler {
             }
 
         }
+        /**
+         * If the counter is zero than the user has lost the current game and his score is decreased.
+         */
         if(counter==0 && underline.indexOf("_")>=0){
 
             score--;
@@ -92,7 +102,9 @@ public class GameHandler {
     }
 
 
-
+    /**
+     * The replaceChar function swaps out the underline for a character if the user guessed the correct character
+     */
     public static ArrayList<String> replaceChar(String word1, String c, String underline){
 
         int ind = word1.indexOf(c);

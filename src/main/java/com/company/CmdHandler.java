@@ -9,7 +9,7 @@ import java.net.Socket;
 import java.util.Scanner;
 
 /**
- * Created by weng on 2019/11/1.
+ * The CmdHandler handles the input from the client input and sends it as a message to the server.
  */
 public class CmdHandler implements Runnable {
     Socket socket;
@@ -39,19 +39,22 @@ public class CmdHandler implements Runnable {
                 String cmd_type = cmd.split(" ")[0];
 
                 switch (cmd_type) {
-                    case "QUIT":
+                    case "disconnect":
 
                         Message.sendMsg(output,new Message("disconnect", "", client.getToken()));
                         status = false;
                         socket.close();
                         break;
-                    case "TRY":
+                    case "try":
                         String cmd_text = cmd.split(" ")[1];
                         Message.sendMsg(output,new Message("try", cmd_text, client.getToken()));
                         break;
                     case "login":
                         String ctext = cmd.split(" ")[1];
                         Message.sendMsg(output,new Message("login", ctext));
+                        break;
+                    default:
+                        System.out.println("Unknown command");
                         break;
 
                 }

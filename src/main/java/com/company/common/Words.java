@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Created by weng on 2019/10/30.
+ * The Words class is used to generate words for the game
  */
 public class Words {
     public static String getWord() throws IOException {

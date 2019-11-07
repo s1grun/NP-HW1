@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.net.Socket;
 
 /**
- * Created by weng on 2019/10/30.
+ * The Message class handles the data structure of the messages being passed from the both client and server
  */
 public class Message implements Serializable {
     private String type;
@@ -36,16 +36,6 @@ public class Message implements Serializable {
 
     public String getType() {
         return type;
-    }
-
-//    public String toString(){
-//        return "{type:"+ type+",body:"+body+"}";
-//    }
-
-    public static Message toMessage(String str){
-        String[] strArr = str.split(",body:");
-//        System.out.println(strArr[0].substring(6));
-        return new Message(strArr[0].substring(6),strArr[1].substring(0,strArr[1].length()-1));
     }
 
 

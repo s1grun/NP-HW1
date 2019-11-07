@@ -3,6 +3,7 @@ package com.company;
 import com.company.common.Message;
 import com.company.common.Serialize;
 import com.company.common.Words;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -16,8 +17,9 @@ import java.util.ArrayList;
 import java.util.Date;
 
 /**
- * Created by weng on 2019/10/31.
+ * The ServerHandler class handles the game for each client
  */
+
 public class ServerHandler implements Runnable{
     private Socket clientSocket;
     private int score;
@@ -33,7 +35,10 @@ public class ServerHandler implements Runnable{
 
 
 
-
+    /**
+     * The run method implements method of interface Java.Lang.Runnable.
+     * So when a new thread is created this method is executed.
+     */
     @Override
     public void run(){
         DataInputStream input= null;
@@ -43,7 +48,9 @@ public class ServerHandler implements Runnable{
             output=new DataOutputStream(clientSocket.getOutputStream());
 
 
-
+            /**
+             * While the client is connected the status is true and the client can communicate with the server
+             */
 
             while (status){
                 int datalen = input.readInt();
@@ -56,19 +63,26 @@ public class ServerHandler implements Runnable{
                 String type = msg.getType();
                 String body = msg.getBody();
 
-
                 switch (type){
                     case "login":
                         String username = body.split(",")[0];
                         String pw = body.split(",")[1];
-                        if (username.equals("a")&& pw.equals("123")){
+
+                        /**
+                         * To be able to start a game the user must first login successfully
+                         */
+
+                        if (username.equals("john")&& pw.equals("123")){
 
                             key= Keys.secretKeyFor(SignatureAlgorithm.HS256);
                             Date date= new Date();
                             long d = date.getTime();
                             date = new Date(d+30*60*1000);
-                            String jws = Jwts.builder().setSubject("a").setExpiration(date).signWith(key).compact();
-                            Message login_msg = new Message("token","login succeed!", jws);
+                            /**
+                             * Here we are constructing the JWT token for authentication
+                             */
+                            String jws = Jwts.builder().setSubject("john").setExpiration(date).signWith(key).compact();
+                            Message login_msg = new Message("token","login successful!", jws);
                             Message.sendMsg(output,login_msg);
 
                             game = new GameHandler(score);
@@ -84,41 +98,44 @@ public class ServerHandler implements Runnable{
                     case "try":
                         String token = msg.getJwt();
 
-                        if(!token.equals(null) && Jwts.parser().setSigningKey(key).parseClaimsJws(token).getBody().getSubject().equals("a")){
-                            String str = body;
-                            Message res =  game.guess(str);
-                            Message.sendMsg(output,res);
-                            if(res.getType().equals("finish")){
-                                this.score = Integer.valueOf(res.getBody());
-                                game = new GameHandler(score);
-                                Message start_msg = new Message("update",game.getUnderline()+","+Integer.toString(game.getCounter())+","+Integer.toString(game.getScore()) );
+                        //System.out.println(token);
+                        if (token == null){
+                            Message start_msg = new Message("login","user is not authenticated" );
+                            Message.sendMsg(output,start_msg);
+                            break;
+                        }
+
+                        try{
+                            Jwts.parser().setSigningKey(key).parseClaimsJws(token);
+                            if( Jwts.parser().setSigningKey(key).parseClaimsJws(token).getBody().getSubject().equals("john")){
+                                String str = body.toLowerCase();
+                                Message res =  game.guess(str);
+                                Message.sendMsg(output,res);
+                                if(res.getType().equals("finish")){
+                                    this.score = Integer.valueOf(res.getBody());
+                                    game = new GameHandler(score);
+                                    Message start_msg = new Message("update",game.getUnderline()+","+Integer.toString(game.getCounter())+","+Integer.toString(game.getScore()) );
+                                    Message.sendMsg(output,start_msg);
+                                }
+                            }else{
+                                Message start_msg = new Message("login","user is not authenticated" );
                                 Message.sendMsg(output,start_msg);
                             }
-                        }else{
+                        }catch (JwtException e){
                             Message start_msg = new Message("login","user is not authenticated" );
                             Message.sendMsg(output,start_msg);
                         }
 
+
                         break;
                     case "disconnect":
-                        Message disconnect = new Message("disconnect","disconnect successfully" );
+                        Message disconnect = new Message("disconnect","disconnected successfully" );
                         Message.sendMsg(output,disconnect);
                         close(input,output);
                         break;
-
                 }
 
-
-
             }
-
-
-
-
-
-
-
-
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -128,9 +145,9 @@ public class ServerHandler implements Runnable{
 
     }
 
-
-
-
+    /**
+     * If we get the disconnect message type we close the connection and kill the current thread.
+     */
     public void close(DataInputStream input, DataOutputStream output) throws IOException {
         status = false;
         input.close();
@@ -139,8 +156,5 @@ public class ServerHandler implements Runnable{
         clientSocket.close();
         Thread.currentThread().stop();
 
-
     }
-
-
 }

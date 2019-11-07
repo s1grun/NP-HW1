@@ -1,15 +1,19 @@
 package com.company;
 
-/**
- * Created by weng on 2018/3/31.
- */
-
 import com.company.common.Message;
 import com.company.common.Serialize;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
+
+/**
+ * The Client class handles the messages received from the Server.
+ * The Client has two threads, one for handling receiving messages from the server and another thread
+ * for handling input from the user and sends it to the server.
+ * The Client will not be stuck while waiting for a reply from the server, it can execute other commands in the mean while.
+ *
+ */
 
 public class Client {
     public String token = null;
@@ -25,22 +29,27 @@ public class Client {
           return token;
     }
 
-
+    /**
+     * Start a new client socket to receive messages
+     * @param client
+     */
     public void startClient(Client client){
         try(Socket clientSocket =new Socket("127.0.0.1",3000)){
 
             System.out.println("connect to 3000");
+            System.out.println("Welcome to Hangman, to start playing login first. Example: login john,123");
 
             Thread cmdhandler = new Thread(new CmdHandler(clientSocket,client));
             cmdhandler.setPriority(Thread.MAX_PRIORITY);
             cmdhandler.start();
 
 
-
+            /**
+             * While the client is connected we handle the logic for the client and update the client view
+             */
             DataInputStream inStream = new DataInputStream(clientSocket.getInputStream());
             while(true){
                 int datalen = inStream.readInt();
-                System.out.println(datalen);
                 byte[] data = new byte[datalen];
                 inStream.readFully(data);
                 Message msg =(Message) Serialize.toObject(data);
